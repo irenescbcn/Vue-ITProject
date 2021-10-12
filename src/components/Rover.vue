@@ -8,12 +8,10 @@
                 <div class="col">
                     <label for="squareWidth">Width</label>
                     <input type="number" class="form-control" id="squareWidth" aria-describedby="squareWidthError" v-model="widthSquare">
-                    <small id="squareWidthError" class="form-text text-muted">---</small>
                 </div>
                 <div class="col">
                     <label for="squareHeight">Height</label>
                     <input type="number" class="form-control" id="squareHeight" aria-describedby="squareHeightError" v-model="heightSquare">
-                    <small id="squareHeightError" class="form-text text-muted">---</small>
                 </div>
             </div>
             <!--ROVER COORDINATES-->
@@ -22,12 +20,10 @@
                 <div class="col">
                     <label for="coordinateX">Coordinate X</label>
                     <input type="number" class="form-control" id="coordinateX" aria-describedby="coordinateXError" v-model="coordX">
-                    <small id="coordinateXError" class="form-text text-muted">---</small>
                 </div>
                 <div class="col">
                     <label for="coordinateY">Coordinate Y</label>
                     <input type="number" class="form-control" id="coordinateY" aria-describedby="coordinateYError" v-model="coordY">
-                    <small id="coordinateYError" class="form-text text-muted">---</small>
                 </div>
                 <div class="col">
                     <div class="form-group">
@@ -55,6 +51,7 @@
             <div class="input-group">
                 <input type="text" class="form-control" readonly="readonly" placeholder="Click on the buttons above" v-model="instructions">
                 <div class="input-group-append">
+                    <button class="btn btn-dark" type="button" @click="deleteCommand()">Delete</button>
                     <button class="btn btn-dark" type="button" @click="validateInputs()">Send</button>
                 </div>
             </div>
@@ -62,20 +59,18 @@
         </div>
 
         <!--TO SHOW THE RESULTS-->
-        
-            <div class="finalResult"> 
-                <p><strong>Final Coordinates: </strong>
-                    <span v-show="showFinalCoordinates">{{finalCoordX}}, {{finalCoordY}}</span>
-                </p>
-                <p><strong>Final Orientation: </strong><span>{{finalOrientation}}</span></p>
-                <p class="text-danger" v-show="showRoverError">{{roverError}}</p>
+        <div class="finalResult"> 
+            <p><strong>Final Coordinates: </strong>
+                <span v-show="showFinalCoordinates">{{finalCoordX}}, {{finalCoordY}}</span>
+            </p>
+            <p><strong>Final Orientation: </strong><span>{{finalOrientation}}</span></p>
+            <p class="text-danger" v-show="showRoverError">{{roverError}}</p>
+        </div>
+        <div class="squareDiv">
+            <div class="square" v-show="showRover" :style="{width: widthSquare*10+50 + 'px', height: heightSquare*10+50 + 'px'}">
+                <img src="@/assets/rover.png" class="roverSize" :style="{'margin-left': finalCoordX*10 + 'px', 'margin-bottom': finalCoordY*10 + 'px', transform: 'rotate(' + rotationNumber + 'deg)'}">
             </div>
-            <div class="squareDiv">
-                <div class="square" v-show="showRover" :style="{width: widthSquare*10 + 'px', height: heightSquare*10 + 'px'}">
-                    <img src="@/assets/rover.png" class="roverSize" :style="{'margin-left': finalCoordX*10 + 'px', 'margin-bottom': finalCoordY*10 + 'px', transform: 'rotate(' + rotationNumber + 'deg)'}">
-                </div>
-            </div>
-        
+        </div>   
     </div>
 </template>
 
@@ -103,10 +98,15 @@ export default {
           showRover: false,
           showRoverError: false,
           rotationNumber: Number,
-     
       }
   }, 
   methods:{
+    //To delete the last command  
+    deleteCommand(){
+        this.instructions.pop()
+    },
+    
+    //To fill in the input with the commands
     commandsButton(command){
         switch(command){
             case "L":
@@ -121,11 +121,12 @@ export default {
         }
     },
 
+    //To check all the inputs
     validateInputs(){ 
         if(this.widthSquare !== Number && this.heightSquare !== Number && this.coordX !== Number && this.coordY !== Number && 
         this.instructions !== []){
             //To validate Coords X and Y
-            if(this.widthSquare < this.coordX || this.heightSquare < this.coordY ){
+            if(this.widthSquare < parseInt(this.coordX) || this.heightSquare < parseInt(this.coordY) ){
                 this.inputError = "Coordinates are not valid. They exceed the area of the square"
             }//To check the size of the square
             else if(this.widthSquare > 99 || this.heightSquare > 99 || this.widthSquare < 30 || this.heightSquare < 30){
@@ -133,7 +134,6 @@ export default {
             }
             else{
                 this.showRover = true
-                let i; 
                 this.inputError = "";
                 //To check the initial orientation in case the commands do not change the initial orientation 
                 if(this.selectedOrientation == "N"){
@@ -147,78 +147,24 @@ export default {
                 }
 
                 //To check the final orientation
-                for(i = 0; i < this.instructions.length; i++){
+                for(let i = 0; i < this.instructions.length; i++){
                     if(this.instructions[i] == "L"){
-                        let j;
-                        if(this.finalOrientation == ""){
-                            for(j = 0; j < this.orientation.length; j++){
-                                if(this.orientation[j] == this.selectedOrientation){
-                                    this.finalOrientation = this.orientation[j-1];
-                                    if(this.finalOrientation == undefined){
-                                        this.finalOrientation = this.orientation[3];
-                                    }
-                                    this.rotationNumber -= 90
-                                    break;
-                                }
-                            }
-                        }else{
-                            for(j = 0; j < this.orientation.length; j++){
-                                if(this.orientation[j] == this.finalOrientation){
-                                    this.finalOrientation = this.orientation[j-1];
-                                    if(this.finalOrientation == undefined){
-                                        this.finalOrientation = this.orientation[3];
-                                    }
-                                    this.rotationNumber -= 90
-                                    break;
-                                }
-                            }  
-                        }
-                        if(this.finalCoordX == Number){
-                            this.finalCoordX = parseInt(this.coordX)
-                        }
-                        if(this.finalCoordY == Number){
-                            this.finalCoordY = parseInt(this.coordY)
-                        }
-                        this.showFinalCoordinates= true
+                        if(this.finalOrientation == "") this.orientationTypeL(this.selectedOrientation);
+                        else this.orientationTypeL(this.finalOrientation);  
+                        this.emptyFinalCoordinates();
+
                     }else if(this.instructions[i] == "A"){
                         if(this.finalOrientation == ""){
                             this.checkCoordinates(this.selectedOrientation)
+                            this.finalOrientation = this.selectedOrientation
                         }else{
                             this.checkCoordinates(this.finalOrientation)    
                         }
+                        
                     }else if(this.instructions[i] == "R"){
-                        let k;
-                        if(this.finalOrientation == ""){
-                            for(k = 0; k < this.orientation.length; k++){
-                                if(this.orientation[k] == this.selectedOrientation){
-                                    this.finalOrientation = this.orientation[k+1];
-                                    if(this.finalOrientation == undefined){
-                                        this.finalOrientation = this.orientation[0];
-                                    }
-                                    this.rotationNumber += 90
-                                    break;
-                                }
-                            }
-                        }else{
-                            for(k = 0; k < this.orientation.length; k++){
-                                if(this.orientation[k] == this.finalOrientation){
-                                    this.finalOrientation = this.orientation[k+1];
-                                    if(this.finalOrientation == undefined){
-                                        this.finalOrientation = this.orientation[0];
-                                    }
-                                    this.rotationNumber += 90
-                                    break;
-                                }
-                            }
-                        }
-
-                        if(this.finalCoordX == Number){
-                            this.finalCoordX = parseInt(this.coordX)
-                        }
-                        if(this.finalCoordY == Number){
-                            this.finalCoordY = parseInt(this.coordY)
-                        }
-                        this.showFinalCoordinates= true  
+                        if(this.finalOrientation == "") this.orientationTypeR(this.selectedOrientation);    
+                        else this.orientationTypeR(this.finalOrientation);
+                        this.emptyFinalCoordinates()
                     }
                 }
             }
@@ -236,54 +182,31 @@ export default {
         }    
     },
 
-
+    //To check if the coordinates are inside the square
     checkCoordinates(orientation){
         switch(orientation){
             case "N":
                 if(this.finalCoordY == Number){
                     this.finalCoordY = parseInt(this.coordY) + 1;
-                    this.showFinalCoordinates = true
-                    if(this.finalCoordY >= this.heightSquare){
-                        this.roverError = "The rover went out of limit";
-                        this.showFinalCoordinates = false;
-                        this.showRoverError = true;
-                        setTimeout(()=>{ this.showRoverError = false;}, 5000);
-                    }
+                    this.NECoordinates(this.finalCoordY, this.heightSquare);
                 }else{
                     this.finalCoordY++;
-                    this.showFinalCoordinates = true;
-                    if(this.finalCoordY >= this.heightSquare){
-                        this.roverError = "The rover went out of limit";
-                        this.showRoverError = true;
-                        this.showFinalCoordinates = false;
-                        setTimeout(()=>{ this.showRoverError = false;}, 5000);
-                    }
-                }  
+                    this.NECoordinates(this.finalCoordY, this.heightSquare);
+                }
+
                 if(this.finalCoordX == Number){
                     this.finalCoordX = parseInt(this.coordX)
                 }
-
             break;
             case "E":
                 if(this.finalCoordX == Number){
                     this.finalCoordX = parseInt(this.coordX) + 1;
-                    this.showFinalCoordinates = true;
-                    if(this.finalCoordX >= this.widthSquare){
-                        this.roverError = "The rover went out of limit";
-                        this.showFinalCoordinates = false;
-                        this.showRoverError = true;
-                        setTimeout(()=>{ this.showRoverError = false;}, 5000);
-                    }
+                    this.NECoordinates(this.finalCoordX, this.widthSquare);
                 }else{
                     this.finalCoordX++;
-                    this.showFinalCoordinates = true;
-                    if(this.finalCoordX >= this.widthSquare){
-                        this.roverError = "The rover went out of limit";
-                        this.showFinalCoordinates = false;
-                        this.showRoverError = true;
-                        setTimeout(()=>{ this.showRoverError = false;}, 5000);
-                    }
+                    this.NECoordinates(this.finalCoordX, this.widthSquare);
                 }
+
                 if(this.finalCoordY == Number){
                     this.finalCoordY = parseInt(this.coordY)
                 }
@@ -291,22 +214,10 @@ export default {
             case "S":
                 if(this.finalCoordY == Number){
                     this.finalCoordY = parseInt(this.coordY) - 1;
-                    this.showFinalCoordinates = true
-                    if(this.finalCoordY <= -1){
-                        this.roverError = "The rover went out of limit";
-                        this.showFinalCoordinates = false;
-                        this.showRoverError = true;
-                        setTimeout(()=>{ this.showRoverError = false;}, 5000);
-                    }
+                    this.SWCoordinates(this.finalCoordY)
                 }else{
                     this.finalCoordY--;
-                    this.showFinalCoordinates = true;
-                    if(this.finalCoordY <= -1){
-                        this.roverError = "The rover went out of limit";
-                        this.showFinalCoordinates = false;
-                        this.showRoverError = true;
-                        setTimeout(()=>{ this.showRoverError = false;}, 5000);
-                    } 
+                    this.SWCoordinates(this.finalCoordY)
                 }
 
                 if(this.finalCoordX == Number){
@@ -316,29 +227,79 @@ export default {
             case "W":
                 if(this.finalCoordX == Number){
                     this.finalCoordX = parseInt(this.coordY) - 1;
-                    this.showFinalCoordinates = true
-                    if(this.finalCoordX <= -1){
-                        this.roverError = "The rover went out of limit";
-                        this.showFinalCoordinates = false;
-                        this.showRoverError = true;
-                        setTimeout(()=>{ this.showRoverError = false;}, 5000);
-                    }
+                    this.SWCoordinates(this.finalCoordX)
                 }else{
                     this.finalCoordX--;
-                    this.showFinalCoordinates = true;
-                    if(this.finalCoordX <= -1){
-                        this.roverError = "The rover went out of limit";
-                        this.showFinalCoordinates = false;
-                        this.showRoverError = true;
-                        setTimeout(()=>{ this.showRoverError = false;}, 5000);
-                    } 
+                    this.SWCoordinates(this.finalCoordX)
                 }
+
                 if(this.finalCoordY == Number){
                     this.finalCoordY = parseInt(this.coordY)
                 }
             break;
         }
-    }  
+    },
+
+    //To show the final coordinates in case they are the same as the initial ones
+    emptyFinalCoordinates(){
+        if(this.finalCoordX == Number){
+            this.finalCoordX = parseInt(this.coordX)
+        }
+        if(this.finalCoordY == Number){
+            this.finalCoordY = parseInt(this.coordY)
+        }
+        this.showFinalCoordinates= true 
+    },
+
+    //To modify the initial orientation when turning LEFT
+    orientationTypeL(initialFinalOrientation){
+        for(let j = 0; j < this.orientation.length; j++){
+            if(this.orientation[j] == initialFinalOrientation){
+                this.finalOrientation = this.orientation[j-1];
+                if(this.finalOrientation == undefined){
+                    this.finalOrientation = this.orientation[3];
+                }
+                this.rotationNumber -= 90;
+                break;
+            }
+        }  
+    } ,
+
+    //To modify the initial orientation when turning RIGHT
+    orientationTypeR(initialFinalOrientation){
+        for(let k = 0; k < this.orientation.length; k++){
+            if(this.orientation[k] == initialFinalOrientation){
+                this.finalOrientation = this.orientation[k+1];
+                if(this.finalOrientation == undefined){
+                    this.finalOrientation = this.orientation[0];
+                }
+                this.rotationNumber += 90
+                break;
+            }
+        }
+    },
+
+    //To check the coordinates when the orientation is N or E
+    NECoordinates(finalCoord, widthHeight){
+        this.showFinalCoordinates = true
+        if(finalCoord > widthHeight){
+            this.roverError = "The rover went out of limit";
+            this.showFinalCoordinates = false;
+            this.showRoverError = true;
+            setTimeout(()=>{ this.showRoverError = false;}, 5000);
+        }
+    },
+
+    //To check the coordinates when the orientation is S or W
+    SWCoordinates(finalCoord){
+        this.showFinalCoordinates = true
+        if(finalCoord <= -1){
+            this.roverError = "The rover went out of limit";
+            this.showFinalCoordinates = false;
+            this.showRoverError = true;
+            setTimeout(()=>{ this.showRoverError = false;}, 5000);
+        }
+    },  
   }
   
 }
@@ -349,6 +310,10 @@ export default {
 h5{
     font-weight: bold;
     margin-top: 10px
+}
+
+.btn{
+    border: 1px solid #ced4da !important
 }
 
 .commands{
